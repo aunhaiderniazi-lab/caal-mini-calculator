@@ -1,7 +1,9 @@
+; Author: Aun Haider Niazi
 .model small
 .stack 100h
 .data
 menu db 13,10,'--- MINI CALCULATOR ---',13,10
+     db 'By Aun Haider Niazi',13,10
      db '1. Add',13,10
      db '2. Subtract',13,10
      db '3. Multiply',13,10
