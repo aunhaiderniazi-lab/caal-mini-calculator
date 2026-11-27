@@ -21,6 +21,7 @@ msgb db 13,10,'Binary: $'
 choice db ?
 a db ?
 b db ?
+promptPtr dw ?   ; saved prompt for retrying invalid digits
 
 .code
 main proc
@@ -52,10 +53,17 @@ exit:
 main endp
 
 get_digit proc
+    mov promptPtr, dx       ; remember which prompt to repeat
+get_digit_retry:
+    mov dx, promptPtr
     mov ah, 9
     int 21h
     mov ah, 1
     int 21h
+    cmp al, '0'             ; reject anything outside '0'..'9'
+    jb get_digit_retry
+    cmp al, '9'
+    ja get_digit_retry
     sub al, '0'
     ret
 get_digit endp
@@ -123,20 +131,29 @@ div_zero:
 calc endp
 
 print_num proc
-    mov bl, 10
-    div bl
-    mov cx, ax
-    cmp al, 0
-    je ones
-    mov dl, al
+    ; Prints unsigned AX in decimal (0..65535), not just 0..99.
+    cmp ax, 0
+    jne pn_convert
+    mov dl, '0'
+    mov ah, 2
+    int 21h
+    ret
+pn_convert:
+    mov cx, 0               ; digit counter
+pn_loop:
+    xor dx, dx
+    mov bx, 10
+    div bx                  ; AX = quotient, DX = digit
+    push dx
+    inc cx
+    cmp ax, 0
+    jne pn_loop
+pn_show:
+    pop dx
     add dl, '0'
     mov ah, 2
     int 21h
-ones:
-    mov dl, ch
-    add dl, '0'
-    mov ah, 2
-    int 21h
+    loop pn_show
     ret
 print_num endp
 
